@@ -1,0 +1,62 @@
+services:
+  # LocalStack S3 Service
+  localstack:
+    image: localstack/localstack:2.3
+    container_name: upload-service-localstack
+    ports:
+      - "4566:4566"
+      - "4510-4559:4510-4559"
+    environment:
+      - SERVICES=s3
+      - DEBUG=1
+      - DATA_DIR=/tmp/localstack/data
+      - DOCKER_HOST=unix:///var/run/docker.sock
+      - AWS_DEFAULT_REGION=us-east-1
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
+    volumes:
+      - "./data/localstack:/tmp/localstack"
+      - "/var/run/docker.sock:/var/run/docker.sock"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4566/_localstack/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # File Upload Service
+  upload-service:
+    build: .
+    container_name: upload-service-api
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=sqlite:////app/data/uploads.db
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
+      - AWS_REGION=us-east-1
+      - AWS_ENDPOINT_URL=http://localstack:4566
+      - CHUNK_SIZE=5242880
+      - WORKER_CONCURRENCY=5
+      - FILE_MONITOR_INTERVAL=60
+      - LOG_LEVEL=INFO
+    volumes:
+      - "./data:/app/data"
+      - "~/Desktop:/userdata/Desktop"
+      - "~/Downloads:/userdata/Downloads"
+    depends_on:
+      localstack:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+
+
+volumes:
+  data_localstack:
+    driver: local 
