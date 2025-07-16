@@ -16,7 +16,6 @@ logger = get_logger(__name__)
 class Orchestrator:
     def __init__(self):
         self.max_workers = settings.worker_concurrency
-        self.executor = ThreadPoolExecutor(max_workers=self.max_workers)
         self.semaphore = asyncio.Semaphore(self.max_workers)
     
     async def process_upload_job(self, upload_id: str, filter_files_recently_changed: bool = False) -> bool:

@@ -122,19 +122,15 @@ class UploadWorker:
     
     async def _simple_upload(self, source_path: str, bucket: str, key: str) -> bool:
         """Simple upload for small files"""
-        try:
-            async with aiofiles.open(source_path, 'rb') as f:
-                data = await f.read()
-            
-            loop = asyncio.get_event_loop()
-            await loop.run_in_executor(
-                None,
-                lambda: self.s3_client.put_object(Bucket=bucket, Key=key, Body=data)
-            )
-            return True
-        except Exception as e:
-            logger.error(f"Simple upload failed: {str(e)}")
-            return False
+        async with aiofiles.open(source_path, 'rb') as f:
+            data = await f.read()
+        
+        loop = asyncio.get_event_loop()
+        await loop.run_in_executor(
+            None,
+            lambda: self.s3_client.put_object(Bucket=bucket, Key=key, Body=data)
+        )
+        return True
     
     async def _upload_part(self, source_path: str, bucket: str, key: str, part_number: int, upload_id: str, offset: int, size: int) -> Dict[str, Any]:
         """Upload a single part with semaphore control"""
@@ -252,7 +248,7 @@ class UploadWorker:
                     )
                 except Exception as abort_error:
                     logger.error(f"Failed to abort multipart upload: {str(abort_error)}")
-            return False
+            raise
     
     async def _verify_upload(self, bucket: str, key: str, expected_size: int) -> bool:
         """Verify that file was uploaded correctly"""
