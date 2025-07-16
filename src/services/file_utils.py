@@ -1,10 +1,9 @@
 import os
 import fnmatch
-from datetime import datetime, timezone
 from typing import Dict
 
 async def find_matching_files(source_folder: str, pattern: str = "*") -> Dict[str, Dict]:
-    """Walk `source_folder` and return {rel_path: {'mtime':…, 'size':…}}."""
+    """Walk `source_folder` and return {rel_path: {'mtime': unix_timestamp, 'size': bytes}}."""
     files: Dict[str, Dict] = {}
     if not os.path.exists(source_folder):
         return files
@@ -16,7 +15,7 @@ async def find_matching_files(source_folder: str, pattern: str = "*") -> Dict[st
                 try:
                     stat = os.stat(full_path)
                     files[relative] = {
-                        'mtime': datetime.fromtimestamp(stat.st_mtime, tz=timezone.utc),
+                        'mtime': stat.st_mtime,  # Unix timestamp as float
                         'size': stat.st_size
                     }
                 except OSError:

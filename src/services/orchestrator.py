@@ -154,13 +154,7 @@ class Orchestrator:
             if not filter_files_recently_changed:
                 return True
             
-            file_mtime = file_info['mtime']
-            if hasattr(file_mtime, 'timestamp'):
-                file_mtime_timestamp = file_mtime.timestamp()
-            else:
-                file_mtime_timestamp = file_mtime
-            
-            time_since_modification = current_time - file_mtime_timestamp
+            time_since_modification = current_time - file_info['mtime']
             return time_since_modification >= settings.file_stability_threshold
         
         # Get existing file records
@@ -174,10 +168,7 @@ class Orchestrator:
                 logger.debug(f"File modified too recently, skipping upload", extra={
                     "upload_id": upload_id,
                     "file_path": file_path,
-                    "time_since_modification": current_time - (
-                        file_info['mtime'].timestamp() if hasattr(file_info['mtime'], 'timestamp') 
-                        else file_info['mtime']
-                    )
+                    "time_since_modification": current_time - file_info['mtime']
                 })
                 continue
 
@@ -198,7 +189,11 @@ class Orchestrator:
                     files_to_upload.append(existing_file)
                     logger.info(f"File modified, marked for re-upload", extra={
                         "upload_id": upload_id,
-                        "file_path": file_path
+                        "file_path": file_path,
+                        "old_mtime": existing_file.mtime,
+                        "new_mtime": file_info['mtime'],
+                        "old_size": existing_file.size,
+                        "new_size": file_info['size']
                     })
                 else:
                     # File exists but not uploaded (PENDING/FAILED/IN_PROGRESS) - upload it

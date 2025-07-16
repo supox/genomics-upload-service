@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, Text, ForeignKey, BigInteger, Enum as SqlEnum
+from sqlalchemy import Column, Integer, String, DateTime, Text, ForeignKey, BigInteger, Enum as SqlEnum, Float
 from sqlalchemy.orm import relationship
 from datetime import datetime, timezone
 from enum import Enum
@@ -18,7 +18,7 @@ class File(Base):
     path = Column(Text, nullable=False)  # relative to source_folder
     state = Column(SqlEnum(FileState), default=FileState.PENDING, nullable=False)
     failure_reason = Column(Text, nullable=True)  # reason for failure when state is FAILED
-    mtime = Column(DateTime, nullable=True)
+    mtime = Column(Float, nullable=True)  # Unix timestamp
     size = Column(BigInteger, nullable=True)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
